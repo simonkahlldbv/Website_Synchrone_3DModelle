@@ -143,73 +143,71 @@ model-viewer {
 </div>
 
 <script>
-/* --- STABILE SYNCHRONISIERTE KAMERA --- */
+document.addEventListener("DOMContentLoaded", () => {
+  /* --- STABILE SYNCHRONISIERTE KAMERA --- */
+  const mvA = document.getElementById("viewer");
+  const mvB = document.getElementById("overlayModel");
 
-// IDs angepasst
-const mvA = document.getElementById("viewer");
-const mvB = document.getElementById("overlayModel");
+  let syncing = false;
 
-let syncing = false;
+  function syncCamera(source, target) {
+    if (syncing) return;
+    syncing = true;
 
-function syncCamera(source, target) {
-  if (syncing) return;
-  syncing = true;
+    try {
+      target.cameraOrbit  = source.cameraOrbit;
+      target.cameraTarget = source.cameraTarget;
+      target.fieldOfView  = source.fieldOfView;
+    } catch (e) {
+      // Viewer evtl. noch nicht bereit – ignorieren
+    }
 
-  try {
-    target.cameraOrbit  = source.cameraOrbit;
-    target.cameraTarget = source.cameraTarget;
-    target.fieldOfView  = source.fieldOfView;
-  } catch (e) {
-    // Viewer evtl. noch nicht bereit – ignorieren
+    requestAnimationFrame(() => {
+      syncing = false;
+    });
   }
 
-  requestAnimationFrame(() => {
-    syncing = false;
+  mvA.addEventListener("camera-change", () => syncCamera(mvA, mvB));
+  mvB.addEventListener("camera-change", () => syncCamera(mvB, mvA));
+
+  /* --- OPTIONALE STARTPOSITION --- */
+  function setInitialView() {
+    const orbit = "0deg 75deg 3m";
+    const target = "0m 0m 0m";
+
+    mvA.cameraOrbit = orbit;
+    mvB.cameraOrbit = orbit;
+    mvA.cameraTarget = target;
+    mvB.cameraTarget = target;
+  }
+
+  mvA.addEventListener("load", setInitialView);
+  mvB.addEventListener("load", setInitialView);
+
+  /* --- MODELLE LADEN --- */
+  window.setMain = function(file) {
+    const main = document.getElementById("mainModel");
+    if (main) {
+      main.src = file;
+
+      // Modelle auch in Vergleich vorbereiten
+      mvA.src = file;
+      mvB.src = file;
+    }
+  }
+
+  /* --- VERGLEICH-ANZEIGE --- */
+  const compareBtn = document.getElementById("compareBtn");
+  const compareView = document.getElementById("compare");
+  const backBtn = document.getElementById("back");
+
+  compareBtn.addEventListener("click", () => {
+    compareView.style.display = "block";
   });
-}
 
-// Kameraänderungen synchronisieren
-mvA.addEventListener("camera-change", () => syncCamera(mvA, mvB));
-mvB.addEventListener("camera-change", () => syncCamera(mvB, mvA));
-
-/* --- OPTIONALE Startposition --- */
-function setInitialView() {
-  const orbit = "0deg 75deg 3m";
-  const target = "0m 0m 0m";
-
-  mvA.cameraOrbit = orbit;
-  mvB.cameraOrbit = orbit;
-  mvA.cameraTarget = target;
-  mvB.cameraTarget = target;
-}
-
-/* --- MODELLE LADEN --- */
-function setMain(file) {
-  const main = document.getElementById("mainModel");
-  if (main) {
-    main.src = file;
-
-    // Modelle auch in Vergleich vorbereiten
-    mvA.src = file;
-    mvB.src = file;
-  }
-}
-
-/* --- INITIAL --- */
-mvA.addEventListener("load", setInitialView);
-mvB.addEventListener("load", setInitialView);
-
-/* --- VERGLEICH-ANZEIGE --- */
-const compareBtn = document.getElementById("compareBtn");
-const compareView = document.getElementById("compare");
-const backBtn = document.getElementById("back");
-
-compareBtn.addEventListener("click", () => {
-  compareView.style.display = "block";
-});
-
-backBtn.addEventListener("click", () => {
-  compareView.style.display = "none";
+  backBtn.addEventListener("click", () => {
+    compareView.style.display = "none";
+  });
 });
 </script>
 
