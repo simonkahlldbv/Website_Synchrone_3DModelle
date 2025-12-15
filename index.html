@@ -67,6 +67,7 @@ model-viewer {
   background: white;
   display: none;
   z-index: 100;
+  overflow: hidden;
 }
 
 #back {
@@ -81,22 +82,39 @@ model-viewer {
   cursor: pointer;
 }
 
-/* Two panels */
-#panels {
-  display: flex;
+/* Vergleichscontainer */
+#compareContainer {
+  position: relative;
+  width: 100%;
   height: 100%;
 }
 
-.panel {
-  flex: 1;
-  position: relative;
+/* Beide Modelle übereinander */
+#viewer, #overlayModel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
 }
 
-/* Overlay viewer (non interactive) */
-.overlay {
+/* Overlay rechts initial auf 50% Breite */
+#overlayModel {
+  clip-path: inset(0 50% 0 0);
   pointer-events: none;
+}
+
+/* Roter vertikaler Schieberegler */
+#slider {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 50%;
+  width: 3px;
+  height: 100%;
+  background: red;
+  cursor: ew-resize;
+  z-index: 150;
+  transform: translateX(-50%);
 }
 </style>
 </head>
@@ -124,21 +142,16 @@ model-viewer {
 <div id="compare">
   <button id="back">← Zurück</button>
 
-  <div id="panels">
-    <!-- LEFT -->
-    <div class="panel">
-      <model-viewer id="viewer"
-        camera-controls
-        interaction-prompt="none">
-      </model-viewer>
-    </div>
+  <div id="compareContainer">
+    <model-viewer id="viewer"
+      camera-controls
+      interaction-prompt="none">
+    </model-viewer>
 
-    <!-- RIGHT -->
-    <div class="panel">
-      <model-viewer id="overlayModel"
-        class="overlay">
-      </model-viewer>
-    </div>
+    <model-viewer id="overlayModel">
+    </model-viewer>
+
+    <div id="slider"></div>
   </div>
 </div>
 
@@ -158,23 +171,18 @@ document.addEventListener("DOMContentLoaded", () => {
       target.cameraOrbit  = source.cameraOrbit;
       target.cameraTarget = source.cameraTarget;
       target.fieldOfView  = source.fieldOfView;
-    } catch (e) {
-      // Viewer evtl. noch nicht bereit – ignorieren
-    }
+    } catch (e) {}
 
-    requestAnimationFrame(() => {
-      syncing = false;
-    });
+    requestAnimationFrame(() => syncing = false);
   }
 
   mvA.addEventListener("camera-change", () => syncCamera(mvA, mvB));
   mvB.addEventListener("camera-change", () => syncCamera(mvB, mvA));
 
-  /* --- OPTIONALE STARTPOSITION --- */
+  /* --- OPTIONAL: Startposition --- */
   function setInitialView() {
     const orbit = "0deg 75deg 3m";
     const target = "0m 0m 0m";
-
     mvA.cameraOrbit = orbit;
     mvB.cameraOrbit = orbit;
     mvA.cameraTarget = target;
@@ -184,29 +192,37 @@ document.addEventListener("DOMContentLoaded", () => {
   mvA.addEventListener("load", setInitialView);
   mvB.addEventListener("load", setInitialView);
 
-  /* --- MODELLE LADEN --- */
+  /* --- Modelle laden --- */
   window.setMain = function(file) {
     const main = document.getElementById("mainModel");
-    if (main) {
-      main.src = file;
-
-      // Modelle auch in Vergleich vorbereiten
-      mvA.src = file;
-      mvB.src = file;
-    }
+    if (main) main.src = file;
+    mvA.src = file;
+    mvB.src = file;
   }
 
-  /* --- VERGLEICH-ANZEIGE --- */
+  /* --- Vergleichsmodus ein-/ausblenden --- */
   const compareBtn = document.getElementById("compareBtn");
   const compareView = document.getElementById("compare");
   const backBtn = document.getElementById("back");
 
-  compareBtn.addEventListener("click", () => {
-    compareView.style.display = "block";
-  });
+  compareBtn.addEventListener("click", () => compareView.style.display = "block");
+  backBtn.addEventListener("click", () => compareView.style.display = "none");
 
-  backBtn.addEventListener("click", () => {
-    compareView.style.display = "none";
+  /* --- Schieberegler Funktionalität --- */
+  const slider = document.getElementById("slider");
+  let isDragging = false;
+
+  slider.addEventListener("mousedown", () => isDragging = true);
+  window.addEventListener("mouseup", () => isDragging = false);
+  window.addEventListener("mousemove", (e) => {
+    if (!isDragging) return;
+    const container = document.getElementById("compareContainer");
+    let rect = container.getBoundingClientRect();
+    let x = e.clientX - rect.left;
+    x = Math.max(0, Math.min(rect.width, x));
+    const percent = x / rect.width * 100;
+    mvB.style.clipPath = `inset(0 ${100 - percent}% 0 0)`;
+    slider.style.left = `${percent}%`;
   });
 });
 </script>
