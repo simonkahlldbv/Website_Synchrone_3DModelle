@@ -180,9 +180,6 @@ function setInitialView() {
   mvB.cameraTarget = target;
 }
 
-mvA.addEventListener("load", setInitialView);
-mvB.addEventListener("load", setInitialView);
-
 function setMain(file) {
   const main = document.getElementById("main-model");
   if (main) {
@@ -190,6 +187,9 @@ function setMain(file) {
   }
 }
 
+
+mvA.addEventListener("load", setInitialView);
+mvB.addEventListener("load", setInitialView);
 </script>
 
 
