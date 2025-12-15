@@ -75,7 +75,10 @@ model-viewer {
   left: 16px;
   z-index: 200;
   background: black;
+  color: white;
   padding: 10px 14px;
+  border: none;
+  cursor: pointer;
 }
 
 /* Two panels */
@@ -122,7 +125,6 @@ model-viewer {
   <button id="back">← Zurück</button>
 
   <div id="panels">
-
     <!-- LEFT -->
     <div class="panel">
       <model-viewer id="viewer"
@@ -137,15 +139,15 @@ model-viewer {
         class="overlay">
       </model-viewer>
     </div>
-
   </div>
 </div>
 
 <script>
 /* --- STABILE SYNCHRONISIERTE KAMERA --- */
 
-const mvA = document.getElementById("mvA");
-const mvB = document.getElementById("mvB");
+// IDs angepasst
+const mvA = document.getElementById("viewer");
+const mvB = document.getElementById("overlayModel");
 
 let syncing = false;
 
@@ -166,10 +168,11 @@ function syncCamera(source, target) {
   });
 }
 
+// Kameraänderungen synchronisieren
 mvA.addEventListener("camera-change", () => syncCamera(mvA, mvB));
 mvB.addEventListener("camera-change", () => syncCamera(mvB, mvA));
 
-/* --- OPTIONAL: feste Startposition gegen "Wackeln beim Laden" --- */
+/* --- OPTIONALE Startposition --- */
 function setInitialView() {
   const orbit = "0deg 75deg 3m";
   const target = "0m 0m 0m";
@@ -180,18 +183,35 @@ function setInitialView() {
   mvB.cameraTarget = target;
 }
 
+/* --- MODELLE LADEN --- */
 function setMain(file) {
-  const main = document.getElementById("main-model");
+  const main = document.getElementById("mainModel");
   if (main) {
     main.src = file;
+
+    // Modelle auch in Vergleich vorbereiten
+    mvA.src = file;
+    mvB.src = file;
   }
 }
 
-
+/* --- INITIAL --- */
 mvA.addEventListener("load", setInitialView);
 mvB.addEventListener("load", setInitialView);
-</script>
 
+/* --- VERGLEICH-ANZEIGE --- */
+const compareBtn = document.getElementById("compareBtn");
+const compareView = document.getElementById("compare");
+const backBtn = document.getElementById("back");
+
+compareBtn.addEventListener("click", () => {
+  compareView.style.display = "block";
+});
+
+backBtn.addEventListener("click", () => {
+  compareView.style.display = "none";
+});
+</script>
 
 </body>
 </html>
