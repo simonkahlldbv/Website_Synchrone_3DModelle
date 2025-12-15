@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>3D Vergleich – synchron & deckungsgleich</title>
+<title>3D Modellvergleich – synchron</title>
 
 <script type="module"
   src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js">
@@ -14,7 +14,6 @@ html, body {
   height: 100%;
   overflow: hidden;
   font-family: Arial, sans-serif;
-  background: white;
 }
 
 /* Sidebar */
@@ -27,10 +26,11 @@ html, body {
   background: #1e1e1e;
   padding: 20px;
   box-sizing: border-box;
+  color: white;
   z-index: 10;
 }
 
-.year-btn {
+button {
   width: 100%;
   margin-bottom: 8px;
   padding: 10px;
@@ -41,15 +41,9 @@ html, body {
   cursor: pointer;
 }
 
-#compare-btn {
+#compareBtn {
   margin-top: 20px;
-  padding: 12px;
-  width: 100%;
   background: #0077ff;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
 }
 
 /* Main */
@@ -66,12 +60,12 @@ model-viewer {
   height: 100%;
 }
 
-/* Compare mode */
+/* Compare */
 #compare {
   position: fixed;
   inset: 0;
-  display: none;
   background: white;
+  display: none;
   z-index: 100;
 }
 
@@ -81,37 +75,25 @@ model-viewer {
   left: 16px;
   z-index: 200;
   background: black;
-  color: white;
-  border: none;
   padding: 10px 14px;
-  border-radius: 6px;
-  cursor: pointer;
 }
 
-/* slider */
-#slider {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  width: 4px;
+/* Two panels */
+#panels {
+  display: flex;
   height: 100%;
-  background: red;
-  transform: translateX(-50%);
-  cursor: ew-resize;
-  z-index: 150;
 }
 
-/* overlay models */
-#overlay {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
+.panel {
+  flex: 1;
+  position: relative;
 }
 
-.overlay-model {
+/* Overlay viewer (non interactive) */
+.overlay {
+  pointer-events: none;
   position: absolute;
   inset: 0;
-  pointer-events: none;
 }
 </style>
 </head>
@@ -119,14 +101,14 @@ model-viewer {
 <body>
 
 <div id="sidebar">
-  <button class="year-btn" onclick="setMain('1150.glb')">1150</button>
-  <button class="year-btn" onclick="setMain('1175.glb')">1175</button>
-  <button class="year-btn" onclick="setMain('1374.glb')">1374</button>
-  <button class="year-btn" onclick="setMain('1550.glb')">1550</button>
-  <button class="year-btn" onclick="setMain('1630.glb')">1630</button>
-  <button class="year-btn" onclick="setMain('1936.glb')">1936</button>
+  <button onclick="setMain('1150.glb')">1150</button>
+  <button onclick="setMain('1175.glb')">1175</button>
+  <button onclick="setMain('1374.glb')">1374</button>
+  <button onclick="setMain('1550.glb')">1550</button>
+  <button onclick="setMain('1630.glb')">1630</button>
+  <button onclick="setMain('1936.glb')">1936</button>
 
-  <button id="compare-btn">Vergleichen</button>
+  <button id="compareBtn">Vergleichen</button>
 </div>
 
 <div id="main">
@@ -139,28 +121,31 @@ model-viewer {
 <div id="compare">
   <button id="back">← Zurück</button>
 
-  <!-- EIN interaktiver Viewer -->
-  <model-viewer id="compareViewer"
-    camera-controls
-    interaction-prompt="none">
-  </model-viewer>
+  <div id="panels">
 
-  <!-- Überlagerte Modelle -->
-  <div id="overlay">
-    <model-viewer id="modelA" class="overlay-model"></model-viewer>
-    <model-viewer id="modelB" class="overlay-model"></model-viewer>
+    <!-- LEFT -->
+    <div class="panel">
+      <model-viewer id="viewer"
+        camera-controls
+        interaction-prompt="none">
+      </model-viewer>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="panel">
+      <model-viewer id="overlayModel"
+        class="overlay">
+      </model-viewer>
+    </div>
+
   </div>
-
-  <div id="slider"></div>
 </div>
 
 <script>
 const mainModel = document.getElementById("mainModel");
 const compare = document.getElementById("compare");
-const compareViewer = document.getElementById("compareViewer");
-const modelA = document.getElementById("modelA");
-const modelB = document.getElementById("modelB");
-const slider = document.getElementById("slider");
+const viewer = document.getElementById("viewer");
+const overlayModel = document.getElementById("overlayModel");
 
 mainModel.src = "1150.glb";
 
@@ -168,37 +153,26 @@ function setMain(src) {
   mainModel.src = src;
 }
 
-document.getElementById("compare-btn").onclick = () => {
+document.getElementById("compareBtn").onclick = () => {
   compare.style.display = "block";
 
-  compareViewer.src = "1150.glb";
-  modelA.src = "1150.glb";
-  modelB.src = "1936.glb";
+  viewer.src = "1150.glb";
+  overlayModel.src = "1936.glb";
 
   const orbit = "0deg 75deg 3m";
-  compareViewer.cameraOrbit = orbit;
-  modelA.cameraOrbit = orbit;
-  modelB.cameraOrbit = orbit;
+  viewer.cameraOrbit = orbit;
+  overlayModel.cameraOrbit = orbit;
 };
 
 document.getElementById("back").onclick = () => {
   compare.style.display = "none";
 };
 
-/* slider logic */
-let dragging = false;
-
-slider.onmousedown = () => dragging = true;
-window.onmouseup = () => dragging = false;
-window.onmousemove = e => {
-  if (!dragging) return;
-
-  const x = Math.max(50, Math.min(window.innerWidth - 50, e.clientX));
-  slider.style.left = x + "px";
-
-  const pct = x / window.innerWidth * 100;
-  modelB.style.clipPath = `inset(0 0 0 ${pct}%)`;
-};
+/* HARD SYNC */
+viewer.addEventListener("camera-change", () => {
+  overlayModel.cameraOrbit = viewer.getCameraOrbit();
+  overlayModel.fieldOfView = viewer.fieldOfView;
+});
 </script>
 
 </body>
