@@ -146,6 +146,24 @@ model-viewer::part(default-controls) {
 
 <div id="compare">
   <button id="back">← Zurück</button>
+  <div id="sel-left" class="selector">
+  <button onclick="mvA.src='1150.glb'">1150</button>
+  <button onclick="mvA.src='1175.glb'">1175</button>
+  <button onclick="mvA.src='1374.glb'">1374</button>
+  <button onclick="mvA.src='1550.glb'">1550</button>
+  <button onclick="mvA.src='1630.glb'">1630</button>
+  <button onclick="mvA.src='1936.glb'">1936</button>
+</div>
+
+<div id="sel-right" class="selector">
+  <button onclick="mvB.src='1150.glb'">1150</button>
+  <button onclick="mvB.src='1175.glb'">1175</button>
+  <button onclick="mvB.src='1374.glb'">1374</button>
+  <button onclick="mvB.src='1550.glb'">1550</button>
+  <button onclick="mvB.src='1630.glb'">1630</button>
+  <button onclick="mvB.src='1936.glb'">1936</button>
+</div>
+
 
   <div id="compare-container">
     <model-viewer id="mvA" class="compare-viewer"
