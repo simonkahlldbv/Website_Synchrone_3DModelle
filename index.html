@@ -192,6 +192,24 @@ document.addEventListener("DOMContentLoaded", () => {
   const left = document.getElementById("leftModel");
   const right = document.getElementById("rightModel");
   const rightMask = document.getElementById("rightMask");
+  const mainModel = document.getElementById("mainModel");
+
+  // Optional: Offset für Modelle (X,Y,Z in Metern)
+  const modelOffsets = {
+    "1150": {x:0, y:0, z:0},
+    "1175": {x:0, y:0, z:0},
+    "1374": {x:0, y:0, z:0},
+    "1550": {x:0, y:0, z:0},
+    "1630": {x:0, y:0, z:0},
+    "1936": {x:0, y:0, z:0}
+  };
+
+  function applyOffset(modelElement, year) {
+    const offset = modelOffsets[year] || {x:0,y:0,z:0};
+    modelElement.style.transform = `translate(-50%, -50%) translate(${offset.x}m, ${offset.y}m)`;
+    // Kamera auf Zentrum setzen
+    modelElement.cameraTarget = `0m 0m 0m`;
+  }
 
   // Synchronisierte Kamera
   let syncing = false;
@@ -202,13 +220,13 @@ document.addEventListener("DOMContentLoaded", () => {
       target.cameraOrbit = source.cameraOrbit;
       target.cameraTarget = source.cameraTarget;
       target.fieldOfView = source.fieldOfView;
-    } catch (e) {}
-    requestAnimationFrame(() => syncing = false);
+    } catch(e){}
+    requestAnimationFrame(()=>syncing=false);
   }
-  left.addEventListener("camera-change", () => syncCamera(left, right));
-  right.addEventListener("camera-change", () => syncCamera(right, left));
 
-  // Startposition
+  left.addEventListener("camera-change", ()=>syncCamera(left,right));
+  right.addEventListener("camera-change", ()=>syncCamera(right,left));
+
   function setInitialView() {
     const orbit = "0deg 75deg 3m";
     const target = "0m 0m 0m";
@@ -217,57 +235,60 @@ document.addEventListener("DOMContentLoaded", () => {
     left.cameraTarget = target;
     right.cameraTarget = target;
   }
+
   left.addEventListener("load", setInitialView);
   right.addEventListener("load", setInitialView);
 
   // Hauptmodell laden
-  const mainModel = document.getElementById("mainModel");
-  function setMain(file) {
+  function setMain(file){
     mainModel.src = file;
   }
 
-  // Vergleichsmodus öffnen
+  // Vergleichsmodus öffnen/schließen
   const compareBtn = document.getElementById("compareBtn");
   const compareView = document.getElementById("compare");
   const backBtn = document.getElementById("back");
-
-  compareBtn.addEventListener("click", () => compareView.style.display = "block");
-  backBtn.addEventListener("click", () => compareView.style.display = "none");
+  compareBtn.addEventListener("click", ()=>compareView.style.display="block");
+  backBtn.addEventListener("click", ()=>compareView.style.display="none");
 
   // Jahreszahlen Buttons
   const years = ["1150","1175","1374","1550","1630","1936"];
   const leftYearsContainer = document.getElementById("leftYears");
   const rightYearsContainer = document.getElementById("rightYears");
 
-  function createButtons(container, modelElement) {
-    years.forEach(year => {
-      const btn = document.createElement("button");
+  function createButtons(container, modelElement){
+    years.forEach(year=>{
+      const btn=document.createElement("button");
       btn.textContent = year;
-      btn.addEventListener("click", () => modelElement.src = year + ".glb");
+      btn.addEventListener("click", ()=>{
+        modelElement.src = year+".glb";
+        applyOffset(modelElement, year);
+      });
       container.appendChild(btn);
     });
   }
-  createButtons(leftYearsContainer, left);
-  createButtons(rightYearsContainer, right);
 
-  // Slider Funktionalität
+  createButtons(leftYearsContainer,left);
+  createButtons(rightYearsContainer,right);
+
+  // Slider
   const slider = document.getElementById("slider");
-  let isDragging = false;
+  let isDragging=false;
 
-  slider.addEventListener("mousedown", () => isDragging = true);
-  window.addEventListener("mouseup", () => isDragging = false);
-  window.addEventListener("mousemove", (e) => {
-    if (!isDragging) return;
-    const container = document.getElementById("compareContainer");
-    let rect = container.getBoundingClientRect();
-    let x = e.clientX - rect.left;
-    x = Math.max(0, Math.min(rect.width, x));
-    const percent = x / rect.width * 100;
-    rightMask.style.width = percent + "%";
-    slider.style.left = percent + "%";
+  slider.addEventListener("mousedown",()=>isDragging=true);
+  window.addEventListener("mouseup",()=>isDragging=false);
+  window.addEventListener("mousemove",(e)=>{
+    if(!isDragging) return;
+    const container=document.getElementById("compareContainer");
+    let rect=container.getBoundingClientRect();
+    let x=e.clientX-rect.left;
+    x=Math.max(0,Math.min(rect.width,x));
+    const percent = x/rect.width*100;
+    rightMask.style.width = percent+"%";
+    slider.style.left = percent+"%";
   });
 
-  // Option: Hauptmodell standardmäßig laden
+  // Initiales Hauptmodell
   setMain("1150.glb");
 });
 </script>
