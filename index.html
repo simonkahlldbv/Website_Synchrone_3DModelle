@@ -182,6 +182,14 @@ function setInitialView() {
 
 mvA.addEventListener("load", setInitialView);
 mvB.addEventListener("load", setInitialView);
+
+function setMain(file) {
+  const main = document.getElementById("main-model");
+  if (main) {
+    main.src = file;
+  }
+}
+
 </script>
 
 
