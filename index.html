@@ -89,8 +89,8 @@ model-viewer {
   height: 100%;
 }
 
-/* Beide Modelle übereinander */
-#viewer, #overlayModel {
+/* Modelle übereinander */
+#leftModel, #rightModel {
   position: absolute;
   top: 0;
   left: 0;
@@ -98,8 +98,8 @@ model-viewer {
   height: 100%;
 }
 
-/* Overlay rechts initial auf 50% Breite */
-#overlayModel {
+/* Rechtes Modell initial halb verdeckt */
+#rightModel {
   clip-path: inset(0 50% 0 0);
   pointer-events: none;
 }
@@ -116,19 +116,31 @@ model-viewer {
   z-index: 150;
   transform: translateX(-50%);
 }
+
+/* Jahreszahlen-Bereiche */
+#leftYears, #rightYears {
+  position: absolute;
+  top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  z-index: 200;
+}
+
+#leftYears { left: 20px; }
+#rightYears { right: 20px; }
+
+#leftYears button, #rightYears button {
+  width: 60px;
+  padding: 5px;
+  font-size: 12px;
+}
 </style>
 </head>
 
 <body>
 
 <div id="sidebar">
-  <button onclick="setMain('1150.glb')">1150</button>
-  <button onclick="setMain('1175.glb')">1175</button>
-  <button onclick="setMain('1374.glb')">1374</button>
-  <button onclick="setMain('1550.glb')">1550</button>
-  <button onclick="setMain('1630.glb')">1630</button>
-  <button onclick="setMain('1936.glb')">1936</button>
-
   <button id="compareBtn">Vergleichen</button>
 </div>
 
@@ -143,64 +155,70 @@ model-viewer {
   <button id="back">← Zurück</button>
 
   <div id="compareContainer">
-    <model-viewer id="viewer"
-      camera-controls
-      interaction-prompt="none">
-    </model-viewer>
+    <!-- Deckungsgleich übereinander liegende Modelle -->
+    <model-viewer id="leftModel" camera-controls interaction-prompt="none"></model-viewer>
+    <model-viewer id="rightModel" camera-controls interaction-prompt="none"></model-viewer>
 
-    <model-viewer id="overlayModel">
-    </model-viewer>
-
+    <!-- Roter Schieberegler -->
     <div id="slider"></div>
+
+    <!-- Jahreszahlen-Auswahl -->
+    <div id="leftYears"></div>
+    <div id="rightYears"></div>
   </div>
 </div>
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-  /* --- STABILE SYNCHRONISIERTE KAMERA --- */
-  const mvA = document.getElementById("viewer");
-  const mvB = document.getElementById("overlayModel");
+  const left = document.getElementById("leftModel");
+  const right = document.getElementById("rightModel");
 
+  // Synchronisierte Kamera
   let syncing = false;
-
   function syncCamera(source, target) {
     if (syncing) return;
     syncing = true;
-
     try {
       target.cameraOrbit  = source.cameraOrbit;
       target.cameraTarget = source.cameraTarget;
       target.fieldOfView  = source.fieldOfView;
     } catch (e) {}
-
     requestAnimationFrame(() => syncing = false);
   }
 
-  mvA.addEventListener("camera-change", () => syncCamera(mvA, mvB));
-  mvB.addEventListener("camera-change", () => syncCamera(mvB, mvA));
+  left.addEventListener("camera-change", () => syncCamera(left, right));
+  right.addEventListener("camera-change", () => syncCamera(right, left));
 
-  /* --- OPTIONAL: Startposition --- */
+  // Startposition
   function setInitialView() {
     const orbit = "0deg 75deg 3m";
     const target = "0m 0m 0m";
-    mvA.cameraOrbit = orbit;
-    mvB.cameraOrbit = orbit;
-    mvA.cameraTarget = target;
-    mvB.cameraTarget = target;
+    left.cameraOrbit = orbit;
+    right.cameraOrbit = orbit;
+    left.cameraTarget = target;
+    right.cameraTarget = target;
+  }
+  left.addEventListener("load", setInitialView);
+  right.addEventListener("load", setInitialView);
+
+  // Modelle laden
+  const years = ["1150","1175","1374","1550","1630","1936"];
+  const leftYearsContainer = document.getElementById("leftYears");
+  const rightYearsContainer = document.getElementById("rightYears");
+
+  function createButtons(container, modelElement) {
+    years.forEach(year => {
+      const btn = document.createElement("button");
+      btn.textContent = year;
+      btn.addEventListener("click", () => modelElement.src = year + ".glb");
+      container.appendChild(btn);
+    });
   }
 
-  mvA.addEventListener("load", setInitialView);
-  mvB.addEventListener("load", setInitialView);
+  createButtons(leftYearsContainer, left);
+  createButtons(rightYearsContainer, right);
 
-  /* --- Modelle laden --- */
-  window.setMain = function(file) {
-    const main = document.getElementById("mainModel");
-    if (main) main.src = file;
-    mvA.src = file;
-    mvB.src = file;
-  }
-
-  /* --- Vergleichsmodus ein-/ausblenden --- */
+  // Vergleichsmodus ein/aus
   const compareBtn = document.getElementById("compareBtn");
   const compareView = document.getElementById("compare");
   const backBtn = document.getElementById("back");
@@ -208,7 +226,7 @@ document.addEventListener("DOMContentLoaded", () => {
   compareBtn.addEventListener("click", () => compareView.style.display = "block");
   backBtn.addEventListener("click", () => compareView.style.display = "none");
 
-  /* --- Schieberegler Funktionalität --- */
+  // Schieberegler
   const slider = document.getElementById("slider");
   let isDragging = false;
 
@@ -221,7 +239,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let x = e.clientX - rect.left;
     x = Math.max(0, Math.min(rect.width, x));
     const percent = x / rect.width * 100;
-    mvB.style.clipPath = `inset(0 ${100 - percent}% 0 0)`;
+    right.style.clipPath = `inset(0 ${100 - percent}% 0 0)`;
     slider.style.left = `${percent}%`;
   });
 });
