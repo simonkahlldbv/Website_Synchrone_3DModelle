@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>3D Vergleich – synchron & deckungsgleich</title>
+
+<script type="module"
+  src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js">
+</script>
+
+<style>
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: Arial, sans-serif;
+  background: white;
+}
+
+/* Sidebar */
+#sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 220px;
+  background: #1e1e1e;
+  padding: 20px;
+  box-sizing: border-box;
+  z-index: 10;
+}
+
+.year-btn {
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 10px;
+  background: #333;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+#compare-btn {
+  margin-top: 20px;
+  padding: 12px;
+  width: 100%;
+  background: #0077ff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* Main */
+#main {
+  position: fixed;
+  left: 220px;
+  right: 0;
+  top: 0;
+  bottom: 0;
+}
+
+model-viewer {
+  width: 100%;
+  height: 100%;
+}
+
+/* Compare mode */
+#compare {
+  position: fixed;
+  inset: 0;
+  display: none;
+  background: white;
+  z-index: 100;
+}
+
+#back {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 200;
+  background: black;
+  color: white;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* slider */
+#slider {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 4px;
+  height: 100%;
+  background: red;
+  transform: translateX(-50%);
+  cursor: ew-resize;
+  z-index: 150;
+}
+
+/* overlay models */
+#overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.overlay-model {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+</style>
+</head>
+
+<body>
+
+<div id="sidebar">
+  <button class="year-btn" onclick="setMain('1150.glb')">1150</button>
+  <button class="year-btn" onclick="setMain('1175.glb')">1175</button>
+  <button class="year-btn" onclick="setMain('1374.glb')">1374</button>
+  <button class="year-btn" onclick="setMain('1550.glb')">1550</button>
+  <button class="year-btn" onclick="setMain('1630.glb')">1630</button>
+  <button class="year-btn" onclick="setMain('1936.glb')">1936</button>
+
+  <button id="compare-btn">Vergleichen</button>
+</div>
+
+<div id="main">
+  <model-viewer id="mainModel"
+    camera-controls
+    interaction-prompt="none">
+  </model-viewer>
+</div>
+
+<div id="compare">
+  <button id="back">← Zurück</button>
+
+  <!-- EIN interaktiver Viewer -->
+  <model-viewer id="compareViewer"
+    camera-controls
+    interaction-prompt="none">
+  </model-viewer>
+
+  <!-- Überlagerte Modelle -->
+  <div id="overlay">
+    <model-viewer id="modelA" class="overlay-model"></model-viewer>
+    <model-viewer id="modelB" class="overlay-model"></model-viewer>
+  </div>
+
+  <div id="slider"></div>
+</div>
+
+<script>
+const mainModel = document.getElementById("mainModel");
+const compare = document.getElementById("compare");
+const compareViewer = document.getElementById("compareViewer");
+const modelA = document.getElementById("modelA");
+const modelB = document.getElementById("modelB");
+const slider = document.getElementById("slider");
+
+mainModel.src = "1150.glb";
+
+function setMain(src) {
+  mainModel.src = src;
+}
+
+document.getElementById("compare-btn").onclick = () => {
+  compare.style.display = "block";
+
+  compareViewer.src = "1150.glb";
+  modelA.src = "1150.glb";
+  modelB.src = "1936.glb";
+
+  const orbit = "0deg 75deg 3m";
+  compareViewer.cameraOrbit = orbit;
+  modelA.cameraOrbit = orbit;
+  modelB.cameraOrbit = orbit;
+};
+
+document.getElementById("back").onclick = () => {
+  compare.style.display = "none";
+};
+
+/* slider logic */
+let dragging = false;
+
+slider.onmousedown = () => dragging = true;
+window.onmouseup = () => dragging = false;
+window.onmousemove = e => {
+  if (!dragging) return;
+
+  const x = Math.max(50, Math.min(window.innerWidth - 50, e.clientX));
+  slider.style.left = x + "px";
+
+  const pct = x / window.innerWidth * 100;
+  modelB.style.clipPath = `inset(0 0 0 ${pct}%)`;
+};
+</script>
+
+</body>
+</html>
